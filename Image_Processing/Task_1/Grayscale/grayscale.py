@@ -1,7 +1,9 @@
 # importing necessary libraries
 import numpy as np
 from PIL import Image
+
 '''The approach used here is that for every pixel, change the pixel value of all three channels by their average '''
+
 # PIL is used to open the image and then it is converted into a numpy array
 image = np.array(Image.open('bees.jpg'))
 
