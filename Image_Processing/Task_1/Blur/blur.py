@@ -8,7 +8,7 @@ level =10
 '''The approach used here is that for every pixel, change the pixel value of each channel to the average of pixel values of all its neigbourhood points '''
 
 # PIL is used to open the image and then it is converted into a numpy array
-image = np.array(Image.open('hills.jpg'))
+#image = np.array(Image.open('hills.jpg'))
 
 def blur(image):
     '''Blurs the image by one level'''
@@ -32,12 +32,12 @@ def blur(image):
     return(blurred_image)
 
 #call the functions 'level' times to achieve blurring of that many levels
-for i in range(0,level):
-    image=blur(image)
+#for i in range(0,level):
+#    image=blur(image)
 
 #Converts the image to -ve as it is going to be again inverted in the next step
-image=256-image
+#image=256-image
 
 # The numpy array is converted back to image which is then saved
-Image.fromarray((image * 255).astype(np.uint8)).save('blurred_hills.jpg')
+#Image.fromarray((image * 255).astype(np.uint8)).save('blurred_hills.jpg')
 #asstype is used here as the program was giving an error which may be due to PIL not accepting RGB values in the float (0,1) format :)        
