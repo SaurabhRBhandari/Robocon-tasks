@@ -6,7 +6,15 @@ import matplotlib.pyplot as plt
 
 
 
-'''This program is just to check if the points given by dummylidar.py program are physically viable in real world scenario'''
+
+
+
+'''This program is just to check if the points given by dummylidar.py program are physically viable in real world scenario in the order they are,
+refer to dummylidar.py for the actual algorithm'''
+
+
+
+
 
 
 

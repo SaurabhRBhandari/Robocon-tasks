@@ -2,7 +2,12 @@ import PIL
 from PIL import Image, ImageDraw
 import pathlib
 import math
+#Getting correct output for world map motivated me to try this out on a more complex map,so i have also tested it on world map 2 downloaded from internet.
+#To be honest it did work properly but there was only a small distortion (see the map2quality=20.jpg)
+#So I have included quality factor in the code,increasing it would increase the quality of map at the cost of more points being needed
+#quality is to be set based on a rough estimate about the complexity of map
 
+quality=20
 # Here we load the world map that you need to recreate.
 image = Image.open(pathlib.Path('worldmap.jpg'))
 image = image.convert('1')
@@ -74,8 +79,8 @@ def plot_reading_on_map(centerX, centerY, lidar_reading, map):
             continue
 
 
-for x in range(0, image_size, int(image_size/20)):
-    for y in range(0, image_size, int(image_size/20)):
+for x in range(0, image_size, int(image_size/quality)):
+    for y in range(0, image_size, int(image_size/quality)):
 
         if(map.getpixel((x, y)) == 0):  # If a point is already seen by the lidar,it is skipped
             
