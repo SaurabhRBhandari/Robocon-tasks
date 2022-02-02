@@ -2,7 +2,7 @@ import PIL
 from PIL import Image
 import pathlib
 import math
-
+import matplotlib.pyplot as plt
 
 # Here we load the world map that you need to recreate.
 image = Image.open(pathlib.Path('worldmap.jpg'))
@@ -43,10 +43,14 @@ def plot_reading_on_map(centerX,centerY,map):
                 
             except:
                 continue
-    
+
 map = PIL.Image.new(mode="1", size=(400, 400))
+plt.ion()
 for x in range(0,400,10):
     for y in range(0,400,10):
         plot_reading_on_map(x,y,map)
+        plt.imshow(map)
+        plt.show()
+        plt.pause(0.00001)
+        plt.clf()
 
-map.show()

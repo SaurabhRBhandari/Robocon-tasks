@@ -53,13 +53,16 @@ def plot_reading_on_map(centerX,centerY,map):
 
 map = PIL.Image.new(mode="1", size=(400, 400))
 plt.ion()
+plt.axis([0,400,400,0])     
+plt.grid(False)   
+plot_reading_on_map(230,10,map)
+plot_reading_on_map(302,167,map)
+plot_reading_on_map(93,326,map)
+plot_reading_on_map(63,349,map)
 plt.imshow(map)
+plt.figure()
+plt.imshow(image)
 plt.show()
-for x in range(0,400,10):
-    for y in range(0,400,10):
-        if(map.getpixel((x,y))==0):    
-            plot_reading_on_map(x,y,map)
-            plt.imshow(map)
-            plt.show()
-            plt.pause(0.00001)
-            plt.clf()
+
+plt.pause(0)
+plt.clf()
