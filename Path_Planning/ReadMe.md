@@ -35,6 +35,7 @@ Continue in a new terminal window with the ros installation sourced -
 The task is going to be performed on the path_planning package given in this repository.
 Then, run the following command to make sure everything is working fine
 
+
 If everything has been installed properly, you'll see the following tkinter window pop up -
 
 ![tkinter_start_screen](images/start_screen.png)
