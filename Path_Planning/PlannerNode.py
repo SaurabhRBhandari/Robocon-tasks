@@ -60,9 +60,12 @@ class PlannerNode:
                 if next_pos == self.current_obj.walls.end:
                     dir_prob[dir] += 1000
                 if self.get_next_position(dir) in self.blocked_places:
-                    dir_prob[dir] -= 1000
+                    dir_prob[dir] -= 100000
                 if self.closer_to_end(dir):
-                    dir_prob[dir] += 1
+                    dir_prob[dir] += 2
+                if len(dir)==2:
+                    dir_prob[dir] -= 10
+                    
             v = list(dir_prob.values())
             max_prob_dir = []
             for dir in dir_prob:
