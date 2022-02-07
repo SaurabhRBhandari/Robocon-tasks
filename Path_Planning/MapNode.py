@@ -46,7 +46,6 @@ class MapNode:
 
         if self.current == self.__map.end:
             print('Goal reached')
-            sys.exit()
 
         self.walls.array[self.current[0]][self.current[1]] = self.__map.array[self.current[0]][self.current[1]]
         
