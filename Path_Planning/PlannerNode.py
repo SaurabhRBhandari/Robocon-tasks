@@ -41,15 +41,7 @@ class PlannerNode:
             walls = self.current_obj.walls
             position = self.current_obj.current
             self.visited[position[0]][position[1]] += 1
-            dirs = ['left', 'right', 'up', 'down']
-            if(walls.check_left_wall(position)):
-                dirs.remove('left')
-            if(walls.check_right_wall(position)):
-                dirs.remove('right')
-            if(walls.check_top_wall(position)):
-                dirs.remove('up')
-            if(walls.check_bottom_wall(position)):
-                dirs.remove('down')
+            dirs = self.get_probable_dir(position)
             dir_prob = {}
             for dir in dirs:
                 dir_prob[dir] = 0
@@ -94,6 +86,21 @@ class PlannerNode:
             return (self.current_obj.current[0], self.current_obj.current[1]+1)
         elif direction == 'down':
             return (self.current_obj.current[0]+1, self.current_obj.current[1])
+    
+    def get_probable_dir(self,position):
+        walls=self.current_obj.walls
+        dirs=['left','right','up','down']
+        if(walls.check_left_wall(position)):
+            dirs.remove('left')
+        if(walls.check_right_wall(position)):
+            dirs.remove('right')
+        if(walls.check_top_wall(position)):
+            dirs.remove('up')
+        if(walls.check_bottom_wall(position)):
+            dirs.remove('down')
+        
+        return dirs
+    
 
     def closer_to_end(self, dir):
         end = self.current_obj.walls.end
