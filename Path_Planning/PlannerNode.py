@@ -29,7 +29,8 @@ class PlannerNode:
         self.visited = np.zeros(
             (self.current_obj.walls.height, self.current_obj.walls.width))
         self.blocked_places = []
-        self.steps_taken = [self.current_obj.current]
+        self.steps_taken = [self.current_obj.walls.start,
+                            self.current_obj.current]
         self.dir_record = [self.current_direction]
         self.wall_callback()
 
@@ -117,9 +118,59 @@ class PlannerNode:
 
     def make_path(self):
         steps = self.steps_taken
-        print(self.steps_taken)
-        print(self.steps)
-        path = steps
+        start = self.current_obj.walls.start
+        end = self.current_obj.walls.end
+        a = np.ones((self.current_obj.walls.height,
+                    self.current_obj.walls.width),
+                    dtype=np.uint32)
+        for x in range(self.current_obj.walls.height):
+            for y in range(self.current_obj.walls.width):
+                if (x, y) in steps:
+                    a[x][y] = 0
+        print(a)
+
+        m = np.zeros_like(a)
+        m[start[0]][start[1]] = 1
+        
+        k = 0 
+        while m[end[0]][end[1]] == 0:
+            k +=1
+            for i in range(len(m)):
+                for j in range(len(m[i])):
+                   if m[i][j] == k:
+                       if i > 0 and m[i-1][j] == 0 and a[i-1][j] == 0:
+                           m[i-1][j] = k + 1
+                       if j > 0 and m[i][j-1] == 0 and a[i][j-1] == 0:
+                           m[i][j-1] = k + 1
+                       if i < len(m)-1 and m[i+1][j] == 0 and a[i+1][j] == 0:
+                        m[i+1][j] = k + 1
+                       if j < len(m[i])-1 and m[i][j+1] == 0 and a[i][j+1] == 0:
+                        m[i][j+1] = k + 1
+         
+        i, j = end
+        k = m[i][j]
+        path = [(i, j)]
+        while k > 1:
+            if i > 0 and m[i - 1][j] == k-1:
+                i, j = i-1, j
+                path.append((i, j))
+                k -= 1
+            elif j > 0 and m[i][j - 1] == k-1:
+                i, j = i, j-1
+                path.append((i, j))
+                k -= 1
+            elif i < len(m) - 1 and m[i + 1][j] == k-1:
+                i, j = i+1, j
+                path.append((i, j))
+                k -= 1
+            elif j < len(m[i]) - 1 and m[i][j + 1] == k-1:
+                i, j = i, j+1
+                path.append((i, j))
+                k -= 1
+        path.reverse()
+        #print(self.steps_taken)
+        #print(self.steps)
+        
         return path
 
     def show_path(self, path):
