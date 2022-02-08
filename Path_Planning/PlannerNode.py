@@ -6,6 +6,7 @@ import tkinter
 import time
 import math
 
+
 def get_dir_backward(dir_forward):
     if(dir_forward == 'right'):
         return 'left'
@@ -55,9 +56,13 @@ class PlannerNode:
                     dir_prob[dir] -= 100000
                 if self.closer_to_end(dir):
                     dir_prob[dir] += 2
-                if len(dir)==2:
+                if len(dir) == 2:
                     dir_prob[dir] -= 10
-                    
+                # if len(self.get_probable_dir(self.get_next_position(dir)))==2:
+                #    dir_prob[dir] -= 10
+                # if dir==get_dir_backward(self.current_direction):
+                #    dir_prob[dir] -=100
+
             v = list(dir_prob.values())
             max_prob_dir = []
             for dir in dir_prob:
@@ -66,14 +71,15 @@ class PlannerNode:
             dir = random.choice(max_prob_dir)
             self.current_dir = dir
             self.dir_record.append(dir)
-            #dir=max_prob_dir[0]
+            # dir=max_prob_dir[0]
             self.current_obj.direction_callback(dir)
             if self.current_obj.current in self.steps_taken:
                 self.blocked_places.append(position)
 
             self.steps_taken.append(self.current_obj.current)
             self.steps += 1
-        self.make_path()
+        path = self.make_path()
+        self.show_path(path)
 
     def get_next_position(self, direction):
         if direction == 'up':
@@ -86,10 +92,10 @@ class PlannerNode:
             return (self.current_obj.current[0], self.current_obj.current[1]+1)
         elif direction == 'down':
             return (self.current_obj.current[0]+1, self.current_obj.current[1])
-    
-    def get_probable_dir(self,position):
-        walls=self.current_obj.walls
-        dirs=['left','right','up','down']
+
+    def get_probable_dir(self, position):
+        walls = self.current_obj.walls
+        dirs = ['left', 'right', 'up', 'down']
         if(walls.check_left_wall(position)):
             dirs.remove('left')
         if(walls.check_right_wall(position)):
@@ -98,34 +104,27 @@ class PlannerNode:
             dirs.remove('up')
         if(walls.check_bottom_wall(position)):
             dirs.remove('down')
-        
+
         return dirs
-    
 
     def closer_to_end(self, dir):
         end = self.current_obj.walls.end
         current = self.current_obj.current
         dist0 = math.sqrt((current[0]-end[0])**2+(current[1]-end[1])**2)
-        next=self.get_next_position(dir)
+        next = self.get_next_position(dir)
         dist1 = math.sqrt((next[0]-end[0])**2+(next[1]-end[1])**2)
-        return dist1<dist0
-        
-        
-        
-        
+        return dist1 < dist0
+
     def make_path(self):
         steps = self.steps_taken
-        opt_steps = steps.copy()
-
-        for i, step in enumerate(steps):
-            for j, step1 in enumerate(steps[i:]):
-                if step == step1:
-                    del opt_steps[i+1:j]
-
-        width = self.current_obj.walls.width
-        height = self.current_obj.walls.height
         print(self.steps_taken)
         print(self.steps)
+        path = steps
+        return path
+
+    def show_path(self, path):
+        width = self.current_obj.walls.width
+        height = self.current_obj.walls.height
         print_root = tkinter.Tk()
         print_canvas = tkinter.Canvas(
             print_root, bg="white", height=50+height*50, width=50+width*50)
@@ -135,7 +134,7 @@ class PlannerNode:
             (50+(end[1]*50)), (50+(end[0]*50)), (50+((end[1]+1)*50)), (50+((end[0]+1)*50)), fill="#0000ff")
         print_canvas.create_rectangle((50+(start[1]*50)), (50+(start[0]*50)), (50+(
             (start[1]+1)*50)), (50+((start[0]+1)*50)), fill="#000000")
-        for step in opt_steps:
+        for step in path:
             if step == end or step == start:
                 continue
             print_canvas.create_rectangle(
