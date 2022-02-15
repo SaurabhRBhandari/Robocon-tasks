@@ -1,4 +1,3 @@
-from cv2 import blur
 import numpy as np
 import cv2
 
