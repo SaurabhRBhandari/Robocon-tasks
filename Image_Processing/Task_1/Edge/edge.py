@@ -20,7 +20,7 @@ in both x and y directions using sobel's method,denoted by gx and gy.The overall
 calculated using sqrt(gx^2+gy^2).This change should have a hogh value at the edge'''
 
 
-def edge(image):
+def edge(image,thresh):
 
     # A template for storing the resultant image
     edged_image = np.zeros_like(image)
@@ -40,13 +40,16 @@ def edge(image):
 
             # Assigning the pixel value to the derivative,because it would be high if there's an edge,and low otherwise
             edged_image[r+1, c+1] = g
-
+    
+    #To reduce the noise in output image
+    edged_image=np.where(edged_image<thresh,0,edged_image)
+    
     return(Image.fromarray(edged_image))
 
 
 # PIL is used to open the image and then it is converted into a numpy array
-#image = np.array(Image.open('flower.jpg').convert("L"))
-#
-#edge(image).save('edged_flowers.jpg')
+image = np.array(Image.open('flower.jpg').convert("L"))
+
+edge(image,50).save('edged_flower.jpg')
 # The numpy array is converted back to image which is then saved
-# 
+

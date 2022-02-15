@@ -3,7 +3,7 @@ from PIL import Image,ImageDraw
 import pathlib
 import math
 import matplotlib.pyplot as plt
-
+from PIL import ImageFilter
 
 
 
@@ -67,6 +67,7 @@ def plot_reading_on_map(centerX,centerY,map):
 map = PIL.Image.new(mode="1", size=(400, 400))
 plt.ion()
 plot_reading_on_map(0,320,map)
+#map = map.filter(ImageFilter.MedianFilter(size = 11)) 
 plt.imshow(map)
 plt.show()
 plt.pause(5)
@@ -74,6 +75,7 @@ plt.clf()
 
 
 plot_reading_on_map(80,140,map)
+#map = map.filter(ImageFilter.MedianFilter(size = 11))
 plt.imshow(map)
 plt.show()
 plt.pause(5)
@@ -81,6 +83,7 @@ plt.clf()
 
 
 plot_reading_on_map(200,0,map)
+#map = map.filter(ImageFilter.MedianFilter(size = 11))
 plt.imshow(map)
 plt.show()
 plt.pause(5)
@@ -88,6 +91,7 @@ plt.clf()
 
 
 plot_reading_on_map(200,280,map)
+#map = map.filter(ImageFilter.MedianFilter(size = 11))
 plt.imshow(map)
 plt.show()
 plt.pause(5)
@@ -95,6 +99,7 @@ plt.clf()
 
 
 plot_reading_on_map(280,260,map)
+#map = map.filter(ImageFilter.MedianFilter(size = 11))
 plt.imshow(map)
 plt.show()
 plt.pause(5)

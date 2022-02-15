@@ -78,7 +78,7 @@ def plot_reading_on_map(centerX, centerY, lidar_reading, map):
             # to avoid encountering error at the edges
             continue
 
-
+scans=0
 for x in range(0, image_size, int(image_size/quality)):
     for y in range(0, image_size, int(image_size/quality)):
 
@@ -88,11 +88,11 @@ for x in range(0, image_size, int(image_size/quality)):
             lidar_reading = get_lidar_reading(x, y)
             
             if lidar_reading:
-                
+                scans +=1
                 # These are the points where lidar will actually work
                 print(f'({x},{y})')
                 plot_reading_on_map(x, y, lidar_reading, map)
 
-
+print(scans)
 #Finally saving the map created
 map.save('map.jpg')
