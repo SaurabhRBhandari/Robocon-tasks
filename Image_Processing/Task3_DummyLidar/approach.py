@@ -45,37 +45,44 @@ Workflow-
 1.Consider only some points(number is determined by the quality of map seeked for)
 2.If the point is already detected,remove it from schrodingers points
 3.If the point is known to be inside a wall fs, remove it from schrodingers points
-4.The next scan must be on a detected point,{to be decided where}
-5. Repeat until we dont have any scrodingers point left
+4.The next scan must be on a detected point.
+5.To decide scan,make a hill at every scanned point and then find the place of lowest height.
+6.. Repeat until we dont have any scrodingers point left
 '''
-###TODO: correct is_inside_wall function
-###TODO: make get_scan function
+# TODO: correct is_inside_wall function
+# TODO: make get_scan function
+
+
 class LidarScanner:
     def __init__(self, initialX, initialY, map_size, quality1=20, quality2=1):
         self.position = [initialX, initialY]
         self.map = map = PIL.Image.new(mode="1", size=map_size)
         self.map_quality = quality1
         self.schr_points = []
-        self.schr_negligence=quality2
+        self.schr_negligence = quality2
         self.detected_points = [(initialX, initialY)]
+        self.scanned_points=[]
         self.walls = []
         for (x, y), point in np.ndenumerate(np.zeros_like(map)):
             if x % quality1 == 0 and y % quality1 == 0:
                 self.schr_points.append((x, y))
 
     def run_scanner(self):
-        while len(self.schr_points)>=self.schr_negligence:
+        first_run=True
+        while len(self.schr_points) >= self.schr_negligence:
             for point in self.schr_points:
                 self.is_detected(point)
-                self.is_inside_wall(point)
+                #self.is_inside_wall(point)
             scan_point = self.get_next_scan()
-            if scan_point:
-                self.position = scan_point
+            print(scan_point)
+            self.position = scan_point
+            print(self.position)
             lidar_reading = get_lidar_reading(
                 self.position[0], self.position[1])
             self.plot_reading_on__map(lidar_reading)
             self.display_map()
-            print(self.schr_points)
+            self.scanned_points.append(scan_point)
+            print(len(self.schr_points))
 
     def is_detected(self, point):
         if self.map.getpixel(point) != 0:
@@ -117,15 +124,32 @@ class LidarScanner:
                 if y == 0:
                     edge += 1
                     break
-            if point==(0,0):
-                edge=2
-            print(cnt,edge)
-            if cnt+edge<=4 and cnt+edge>=3:
+            if point == (0, 0):
+                edge = 2
+            print(cnt, edge)
+            if cnt+edge <= 4 and cnt+edge >= 3:
                 self.schr_points.remove(point)
                 return True
 
     def get_next_scan(self):
-        return(random.choice(self.detected_points))
+        dist = {}
+        for point in self.detected_points:
+            d=[]
+            if point not in self.scanned_points:
+                for pt in self.scanned_points:
+                    distance=(point[0]-pt[0])**2+(point[1]-pt[1])**2
+                    if distance>10000:
+                        d.append(distance)
+                    else:
+                        break
+                dist[point]=sum(d)
+        
+        v = list(dist.values())
+ 
+        
+        k = list(dist.keys())
+        
+        return(k[v.index(max(v))])
 
     def plot_reading_on__map(self, lidar_reading):
         '''This plots the collected lidar data on map'''
@@ -169,7 +193,9 @@ class LidarScanner:
     def display_map(self):
         plt.imshow(self.map, cmap='gray')
         plt.show()
-
+    
+    def get_distance(self,point):
+        return (self.position[0]-point[0])**2+(self.position[1]-point[1])**2
 
 ls = LidarScanner(initialX=399, initialY=0, map_size=image.size)
 ls.run_scanner()
