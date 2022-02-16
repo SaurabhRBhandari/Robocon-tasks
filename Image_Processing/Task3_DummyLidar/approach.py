@@ -160,21 +160,15 @@ class LidarScanner:
 
             # avoid scanning a point twice
             if point not in self.scanned_points:
-
+                min_d=np.inf
                 for pt in self.scanned_points:
                     distance = (point[0]-pt[0])**2+(point[1]-pt[1])**2
+                    if distance <min_d:
+                        min_d=distance
+                    
+                dist[point] = min_d
 
-                    # ensure that the point is at some minimum distance from each scan point, to ensure that scans dont happen too close
-                    if distance > 10000:
-                        d.append(distance)
-
-                    else:
-                        d = [0]
-                        break
-
-                dist[point] = sum(d)
-
-        # return the point with maximum sum of distance from the scanned points
+        # return the point with maximum distance from the scanned points
         v = list(dist.values())
         k = list(dist.keys())
 
@@ -229,6 +223,6 @@ class LidarScanner:
 
 
 ls = LidarScanner(initialX=399, initialY=0,
-                  map_size=image.size, quality1=20, quality2=35)
+                  map_size=image.size, quality1=20, quality2=50)
 ls.run_scanner()
 ls.display_map()
