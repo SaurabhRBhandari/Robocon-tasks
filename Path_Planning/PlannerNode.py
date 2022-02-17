@@ -166,9 +166,10 @@ class PlannerNode:
         return dirs
 
     def closer_to_end(self, dir):
-        '''returns true if the popints closer to the end if it moves in the given direction'''
+        '''returns true if the bot move closer to the end if it moves in the given direction'''
 
         end = self.current_obj.walls.end
+
         current = self.current_obj.current
         next = self.get_next_position(dir)
 
@@ -179,7 +180,14 @@ class PlannerNode:
 
     def make_path(self):
         '''Makes the most optimal path given the steps_taken by the bot in reaching the end'''
-        # TODO: add comments to this function
+        # Alogrithm-
+        # 1.Only consider the points where the bot has been to,others are pseudo walls.
+        # 2.Put a 1 at starting point.
+        # 3.Everywhere around 1,put 2 if no wall
+        # 4.Everywhere around 2, put 3 if no wall
+        # 5.Continue till we reach the end
+        # 6.The number at the end is the actual path length
+
         steps = self.steps_taken
 
         start = self.current_obj.walls.start
@@ -195,39 +203,60 @@ class PlannerNode:
                 if (x, y) in steps:
                     a[x][y] = 0
 
+        # start with a blank matrix
         m = np.zeros_like(a)
+
+        # assign one to the starting point
         m[start[0]][start[1]] = 1
 
+        # the counter of steps
         k = 0
 
         while m[end[0]][end[1]] == 0:
 
+            # take the next step
             k += 1
 
+            # the following nested loops are used to make one step
             for i in range(len(m)):
                 for j in range(len(m[i])):
-                    valid_dir = self.get_probable_dir((i, j))
 
+                    # use this object to get the walls' info at the given point.
+                    walls = self.current_obj.walls
+
+                    # if we find the value of some point equal to k->
                     if m[i][j] == k:
+                        
+                        # if there is no number yet,and there is no wall(including pseudo wall),
+                        # set k+1 to that cell
 
-                        if i > 0 and m[i-1][j] == 0 and a[i-1][j] == 0 and 'up' in valid_dir:
+                        if i > 0 and m[i-1][j] == 0 and a[i-1][j] == 0 and not walls.check_top_wall((i, j)):
                             m[i-1][j] = k + 1
 
-                        if j > 0 and m[i][j-1] == 0 and a[i][j-1] == 0 and 'left' in valid_dir:
+                        if j > 0 and m[i][j-1] == 0 and a[i][j-1] == 0 and not walls.check_left_wall((i, j)):
                             m[i][j-1] = k + 1
 
-                        if i < len(m)-1 and m[i+1][j] == 0 and a[i+1][j] == 0 and 'down' in valid_dir:
+                        if i < len(m)-1 and m[i+1][j] == 0 and a[i+1][j] == 0 and not walls.check_bottom_wall((i, j)):
                             m[i+1][j] = k + 1
 
-                        if j < len(m[i])-1 and m[i][j+1] == 0 and a[i][j+1] == 0 and 'right' in valid_dir:
+                        if j < len(m[i])-1 and m[i][j+1] == 0 and a[i][j+1] == 0 and not walls.check_right_wall((i, j)):
                             m[i][j+1] = k + 1
-
+        #now we need to find the shortest path based on the m-matrix
+        
+        #start from the end point
         i, j = end
+        
+        # the value of end point in m
         k = m[i][j]
+        
+        #store the path here,(reversed)
         path = [(i, j)]
 
+        #till we reach the start again
         while k > 1:
 
+            #find a neighbour cell with value k-1, go there decrease k by 1.
+            
             if i > 0 and m[i - 1][j] == k-1:
                 i, j = i-1, j
                 path.append((i, j))
@@ -248,8 +277,10 @@ class PlannerNode:
                 path.append((i, j))
                 k -= 1
 
+        #the path is from end-point to start-point so reverse it.
         path.reverse()
 
+        #return the path calculated
         return path
 
     def show_path(self, path):
