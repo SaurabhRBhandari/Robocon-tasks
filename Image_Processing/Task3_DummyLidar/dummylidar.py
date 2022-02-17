@@ -2,6 +2,7 @@ import PIL
 from PIL import Image, ImageDraw
 import pathlib
 import math
+
 #Getting correct output for world map motivated me to try this out on a more complex map,so i have also tested it on world map 2 downloaded from internet.
 #To be honest it did work properly but there was only a small distortion (see the map2quality=20.jpg)
 #So I have included quality factor in the code,increasing it would increase the quality of map at the cost of more points being needed
