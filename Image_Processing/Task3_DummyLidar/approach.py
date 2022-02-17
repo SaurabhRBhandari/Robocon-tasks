@@ -226,3 +226,4 @@ ls = LidarScanner(initialX=399, initialY=0,
                   map_size=image.size, quality1=20, quality2=50)
 ls.run_scanner()
 ls.display_map()
+ls.map.save('map.jpg')
