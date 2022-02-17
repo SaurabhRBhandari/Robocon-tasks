@@ -1,8 +1,11 @@
+# Importing necessary libraries
 import random
-from MapNode import MapNode
-import numpy as np
-import tkinter
 import math
+import numpy as np
+
+from MapNode import MapNode
+
+import tkinter
 
 
 def get_dir_backward(dir_forward):
@@ -42,8 +45,6 @@ class PlannerNode:
 
         self.steps_taken = [self.current_obj.walls.start,
                             self.current_obj.current]  # the steps taken by bot, in order
-
-        #self.dir_record = [self.current_direction]
 
         self.wall_callback()  # start exploring the maze
 
@@ -226,7 +227,7 @@ class PlannerNode:
 
                     # if we find the value of some point equal to k->
                     if m[i][j] == k:
-                        
+
                         # if there is no number yet,and there is no wall(including pseudo wall),
                         # set k+1 to that cell
 
@@ -241,22 +242,22 @@ class PlannerNode:
 
                         if j < len(m[i])-1 and m[i][j+1] == 0 and a[i][j+1] == 0 and not walls.check_right_wall((i, j)):
                             m[i][j+1] = k + 1
-        #now we need to find the shortest path based on the m-matrix
-        
-        #start from the end point
+        # now we need to find the shortest path based on the m-matrix
+
+        # start from the end point
         i, j = end
-        
+
         # the value of end point in m
         k = m[i][j]
-        
-        #store the path here,(reversed)
+
+        # store the path here,(reversed)
         path = [(i, j)]
 
-        #till we reach the start again
+        # till we reach the start again
         while k > 1:
 
-            #find a neighbour cell with value k-1, go there decrease k by 1.
-            
+            # find a neighbour cell with value k-1, go there decrease k by 1.
+
             if i > 0 and m[i - 1][j] == k-1:
                 i, j = i-1, j
                 path.append((i, j))
@@ -277,10 +278,10 @@ class PlannerNode:
                 path.append((i, j))
                 k -= 1
 
-        #the path is from end-point to start-point so reverse it.
+        # the path is from end-point to start-point so reverse it.
         path.reverse()
 
-        #return the path calculated
+        # return the path calculated
         return path
 
     def show_path(self, path):
