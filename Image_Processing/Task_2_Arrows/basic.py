@@ -5,12 +5,18 @@ import numpy as np
 '''
 The approach used here is to find the axis and tip of arrow to comment on it's orientation.
 For the axis we flip the image about X and Y and check which is identical to original image.
-For the tip, we check pixels near axis 
+For the tip, we check pixels near axis to match the configuration of a tip
 '''
 
 
 class BasicOrientation:
-    def __init__(self, image):
+
+    def __init__(self, image, magnifying_factor):
+        '''Initializing the parameters of our detector'''
+
+        self.mf = magnifying_factor
+
+        # The original image of arrow
         self.image = image
 
         # pre-processing the image
@@ -85,8 +91,17 @@ class BasicOrientation:
         X, Y = np.where(self.image == 255)
         h, w = self.image.shape
 
+        match_x = x/np.count_nonzero(self.image)
+        match_y = y/np.count_nonzero(self.image)
+
+        prob_x = self.mf**(match_x)/(self.mf**(match_x)+self.mf**(match_y))
+        prob_y = self.mf**(match_y)/(self.mf**(match_x)+self.mf**(match_y))
+
+        #print(prob_x)
+        #print(prob_y)
+
         # if image matches with it's X-flip
-        if x > y:
+        if prob_x > 0.95:
 
             for i, y in np.ndenumerate(Y):
 
@@ -103,7 +118,7 @@ class BasicOrientation:
                 return('x+')
 
         # if image matches with it's Y-flip
-        if y > x:
+        if prob_y > 0.95:
 
             for i, x in np.ndenumerate(X):
 
@@ -120,10 +135,8 @@ class BasicOrientation:
                 return('y-')
 
 
-
 # make an object of the image of arrow
-image = cv2.imread('Arrow_2.jpg', cv2.THRESH_BINARY)
+image = cv2.imread('Arrow_4.jpg', cv2.THRESH_BINARY)
 
-image_ori=BasicOrientation(image)
+image_ori = BasicOrientation(image,1e10)
 print(image_ori.get())
-
