@@ -123,7 +123,7 @@ class LidarScanner:
             firstRun = False
 
             # display the generated map
-            self.display_map()
+            #self.display_map()
 
             # TODO:find a better loop exit point
 
@@ -159,14 +159,14 @@ class LidarScanner:
             d = []
 
             # avoid scanning a point twice
-            if point not in self.scanned_points:
-                min_d=np.inf
-                for pt in self.scanned_points:
-                    distance = (point[0]-pt[0])**2+(point[1]-pt[1])**2
-                    if distance <min_d:
-                        min_d=distance
-                    
-                dist[point] = min_d
+            #if point not in self.scanned_points:
+            min_d=np.inf
+            for pt in self.scanned_points:
+                distance = (point[0]-pt[0])**2+(point[1]-pt[1])**2
+                if distance <min_d:
+                    min_d=distance
+                
+            dist[point] = min_d
 
         # return the point with maximum distance from the scanned points
         v = list(dist.values())
@@ -179,41 +179,41 @@ class LidarScanner:
 
         centerX = self.position[0]
         centerY = self.position[1]
+        if lidar_reading:
+            for i, reading in enumerate(lidar_reading):
 
-        for i, reading in enumerate(lidar_reading):
+                try:
+                    '''As the angle given by lidar is integral,
+                    if we try to map all the points where lidar's light could pass,
+                    we see that the generated map doesnt show the points between two light rays.
+                    So here I have collected two consecutive points which lidar has detected,which are
+                    expected to be at a very close distance,and then collect all the points inside the
+                    triangle formed by these points-
+                    1.point where the sensor is
+                    2 and 3.The close consecutive points
+                    Credits-MATH calculus course :)
+                    '''
+                    i0 = reading[0]
+                    r0 = reading[1]
 
-            try:
-                '''As the angle given by lidar is integral,
-                if we try to map all the points where lidar's light could pass,
-                we see that the generated map doesnt show the points between two light rays.
-                So here I have collected two consecutive points which lidar has detected,which are
-                expected to be at a very close distance,and then collect all the points inside the
-                triangle formed by these points-
-                1.point where the sensor is
-                2 and 3.The close consecutive points
-                Credits-MATH calculus course :)
-                '''
-                i0 = reading[0]
-                r0 = reading[1]
+                    i1 = lidar_reading[i+1][0]
+                    r1 = lidar_reading[i+1][1]
 
-                i1 = lidar_reading[i+1][0]
-                r1 = lidar_reading[i+1][1]
+                    x0 = int(r0*math.cos(i0*math.pi/180)+centerX)
+                    y0 = int((r0*math.sin(i0*math.pi/180)+centerY))
 
-                x0 = int(r0*math.cos(i0*math.pi/180)+centerX)
-                y0 = int((r0*math.sin(i0*math.pi/180)+centerY))
+                    x1 = int(r1*math.cos(i1*math.pi/180)+centerX)
+                    y1 = int((r1*math.sin(i1*math.pi/180)+centerY))
 
-                x1 = int(r1*math.cos(i1*math.pi/180)+centerX)
-                y1 = int((r1*math.sin(i1*math.pi/180)+centerY))
+                    self.walls.append((x0, y0))
 
-                self.walls.append((x0, y0))
+                    draw = ImageDraw.Draw(self.map)
+                    draw.polygon([(centerX, centerY), (x0, y0),
+                                (x1, y1)], fill=255, outline=255)
 
-                draw = ImageDraw.Draw(self.map)
-                draw.polygon([(centerX, centerY), (x0, y0),
-                              (x1, y1)], fill=255, outline=255)
-
-            except:
-                # to avoid encountering error at the edges
-                continue
+                except:
+                    # to avoid encountering error at the edges
+                    continue
 
     def display_map(self):
         '''Displays the generated map'''
