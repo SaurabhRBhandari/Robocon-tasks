@@ -1,9 +1,11 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 
-thresh=0.5
+#if the value of slope falls out of these, consider the arrow to be aligned to the axis
+m_min=0.017455
+m_max=57.289
+
 # read the image
 img = cv2.imread('Arrow_3.jpg',cv2.IMREAD_UNCHANGED)
   
@@ -19,26 +21,52 @@ center=np.int0(np.squeeze(np.mean(corners,axis=0)))
 x0,y0=center.ravel()
 
 cv2.circle(img,center,3,255,-1)
+
 out=[]
+
+tip=None
+
 # we iterate through each corner.
-for corner in corners:
-    x, y = corner.ravel()
-    m = (y-y0)/(x-x0)
-    c = y-m*x
-    dist=[]
-    for corner1 in corners:
-        x1, y1 = corner1.ravel()
-        dist.append(y1-m*x1-c)
-    out.append(abs(sum(dist)))
-
-closest_to_zero=min(out)
-
-if closest_to_zero<thresh:
-    tip=np.squeeze(corners[out.index(closest_to_zero)])
-    x_t,y_t=tip.ravel()
-    slope=(y_t-y0)/(x_t-x0)
-    print(math.atan(slope)*180/3.14)
-    cv2.circle(img,tip,3,255,-1)
+for p in corners:
+       
+    #get the co-ordintaes of P
+    x, y = p.ravel()
     
-  
-plt.imshow(img), plt.show()
+    #make a line L passing through center and point p
+    m = (y-y0)/(x-x0)
+    if abs(m)<m_min or abs(m)>m_max:
+        tip=p
+        break
+    
+    c = y0-m*x0
+    
+    dist=0
+    
+    for q in corners:
+        
+        #get the coordinates of Q
+        x1, y1 = q.ravel()
+        
+        #skip if P and Q are same points
+        if x1==x and y1==y:
+            continue
+        
+        #put the point Q in equation of line L
+        dist+=y1-m*x1-c
+    
+    #closer this is to 0, more does L represent the line of symmetry
+    out.append(abs(dist))
+    
+#find the closest_to_zero term in out and the point it corresponds to
+
+
+if tip is None:
+    closest_to_zero=min(out)
+    tip=corners[out.index(closest_to_zero)]
+
+#extract the coordintaes of tip
+x_t,y_t=np.squeeze(tip.ravel())
+cv2.circle(img,(x_t,y_t),3,255,-1)
+    
+plt.imshow(img)
+plt.show()  
