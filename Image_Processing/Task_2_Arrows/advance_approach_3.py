@@ -1,6 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 #if the value of slope falls out of these, consider the arrow to be aligned to the axis
 m_min=0.017455
@@ -66,6 +67,26 @@ if tip is None:
 
 #extract the coordintaes of tip
 x_t,y_t=np.squeeze(tip.ravel())
+dy=y_t-y0
+dx=x_t-x0
+angle=math.atan(dy/dx)*180/np.pi
+
+# I realized that the (x,y) we generakky use is'nt the way image has it's coordinate system,so we have to do some operations
+# (I could'nt give this step enough time,so may be prone to some errors,so i have also marked the tip and cetre in image)
+
+if dy<0 and dx<0:
+    angle=180-angle
+
+elif abs(dx)<2:
+    angle*=-1
+
+elif abs(dy)<2:
+    if dx>0:
+        angle=0
+    else:
+        angle=180        
+
+print(dy,dx,angle)
 cv2.circle(img,(x_t,y_t),3,255,-1)
     
 plt.imshow(img)
