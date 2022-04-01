@@ -1,185 +1,137 @@
-# Importing necessary libraries
+
+import sys
 import random
-import math
 import numpy as np
-
 from MapNode import MapNode
-
 import tkinter
 
-
-def get_dir_backward(dir_forward):
-    '''Returns the direction opposite to input direction'''
-
-    if(dir_forward == 'right'):
-        return 'left'
-
-    if(dir_forward == 'down'):
-        return 'up'
-
-    if(dir_forward == 'left'):
-        return 'right'
-
-    if(dir_forward == 'up'):
-        return 'down'
-
-
 class PlannerNode:
-
     def __init__(self):
-        '''Initializes the attribute of PlannerNode'''
-
         self.current_obj = MapNode()
-
-        # Since we know that the first step the bot will take will be down, we can simply do it here
-        self.current_obj.direction_callback("down")  # example 1
-
-        self.current_direction = 'down'  # stores the direction  where the face of bot is
-
-        self.steps = 1  # number of steps taken by the bot
-
-        self.visited = np.zeros(
-            (self.current_obj.walls.height, self.current_obj.walls.width))  # places visted by the bot
-
-        self.blocked_places = []  # dead-ends
-
-        self.steps_taken = [self.current_obj.walls.start,
-                            self.current_obj.current]  # the steps taken by bot, in order
-
-        self.wall_callback()  # start exploring the maze
+        self.visited_points = list(self.current_obj.current)
+        self.current_dir="down"
+        self.wall_callback()
 
     def wall_callback(self):
 
-        # current_obj has all the attributes to help you in in your path planning !
-        # Your code goes here. You need to figure out an algorithm to decide on the best direction of movement of the bot based on the data you have.
-        # after deciding on the direction, you need to call the direction_callback() function as done in example 1.
-        # dir=['up','down','left','right']
-
-        # till the bot reaches the end
         while self.current_obj.current != self.current_obj.walls.end:
 
-            position = self.current_obj.current  # current position of the bot
-
-            self.visited[position[0]][position[1]] += 1
-
-            # set of directions which are legal
-            dirs = self.get_probable_dir(position)
-
-            # to decide the best direction to be taken
-            dir_prob = {}
-
-            for dir in dirs:
-
-                dir_prob[dir] = 0
-
-                # where the bot would be if the step is taken
-                next_pos = self.get_next_position(dir)
-
-                # penalize if the next point is already visited
-                dir_prob[dir] -= self.visited[next_pos[0]][next_pos[1]]
-
-                # visit unvisited places to explore the map.
-                if self.visited[next_pos[0]][next_pos[1]] == 0:
-                    dir_prob[dir] += 10
-
-                # if next step is end take it.
-                if next_pos == self.current_obj.walls.end:
-                    dir_prob[dir] += 1000
-
-                # avoid blocked places at all cost
-                if self.get_next_position(dir) in self.blocked_places:
-                    dir_prob[dir] -= 100000
-
-                # try to get closer to the end in every step
-                if self.closer_to_end(dir):
-                    dir_prob[dir] += 2
-
-                # a path of length 2 is most probably a loop,so avoid taking it.
-                if len(dir) == 2:
-                    dir_prob[dir] -= 10
-
-            v = list(dir_prob.values())
-
-            # stores the directions with maximum probability.
-            max_prob_dir = []
-
-            for dir in dir_prob:
-                if dir_prob[dir] == max(v):
-                    max_prob_dir.append(dir)
-
-            # From the directions who have maximum probability,choose a random one
-            dir = random.choice(max_prob_dir)
-            self.current_dir = dir
-
-            # Move to the decided point.
-            self.current_obj.direction_callback(dir)
-
-            # if a place is visited twice,add it to blocked place,this makes sure that dead-ends and loops are detected
-            if self.current_obj.current in self.steps_taken:
-                self.blocked_places.append(position)
-
-            # add the current point to steps_taken
-            self.steps_taken.append(self.current_obj.current)
-
-            self.steps += 1
-
-        # make a path from the steps_taken.Eliminates all the loops
-        self.path = self.make_path()
-
-        # display the generated map.
+            next_step = self.get_next_step()
+            self.current_dir=self.get_dir(next_step)
+            self.take_step(next_step)
+            self.visited_points.append(self.current_obj.current)
+        self.path=self.make_path(self.current_obj.walls.start)
         self.show_path(self.path)
 
-    def get_next_position(self, direction):
-        '''returns the position bot will be at if it moves in the geiven direction'''
+    def get_next_step(self):
 
-        if direction == 'up':
-            if self.current_obj.current[0] >= 1:
-                return (self.current_obj.current[0]-1, self.current_obj.current[1])
+        x0, y0 = self.current_obj.current
+        points = [(x0, y0-1), (x0, y0+1), (x0-1, y0), (x0+1, y0)]
 
-        elif direction == 'left':
-            if self.current_obj.current[1] >= 1:
-                return (self.current_obj.current[0], self.current_obj.current[1]-1)
+        cost_map = {}
 
-        elif direction == 'right':
-            return (self.current_obj.current[0], self.current_obj.current[1]+1)
+        for point in points:
+            if self.current_obj.walls.check_coords(point) and self.is_step_valid(point):
+                cost_map[point] = self.get_cost(point)
 
-        elif direction == 'down':
-            return (self.current_obj.current[0]+1, self.current_obj.current[1])
+        v = list(cost_map.values())
 
-    def get_probable_dir(self, position):
-        '''return the directions which are legal to take'''
+        min_cost_points = []
 
-        walls = self.current_obj.walls
-        dirs = ['left', 'right', 'up', 'down']
+        for point in cost_map:
+            if cost_map[point] == min(v):
+                min_cost_points.append(point)
 
-        if(walls.check_left_wall(position)):
-            dirs.remove('left')
+        for point in min_cost_points:
+            if self.get_dir(point)==self.current_dir:
+                return point
+        return random.choice(min_cost_points)
 
-        if(walls.check_right_wall(position)):
-            dirs.remove('right')
-
-        if(walls.check_top_wall(position)):
-            dirs.remove('up')
-
-        if(walls.check_bottom_wall(position)):
-            dirs.remove('down')
-
-        return dirs
-
-    def closer_to_end(self, dir):
-        '''returns true if the bot move closer to the end if it moves in the given direction'''
-
+    def get_cost(self, point):
         end = self.current_obj.walls.end
 
-        current = self.current_obj.current
-        next = self.get_next_position(dir)
+        a = np.zeros((self.current_obj.walls.height,
+                     self.current_obj.walls.width), dtype=np.uint32)
 
-        dist0 = math.sqrt((current[0]-end[0])**2+(current[1]-end[1])**2)
-        dist1 = math.sqrt((next[0]-end[0])**2+(next[1]-end[1])**2)
+        a[point[0]][point[1]] = 1
 
-        return dist1 < dist0
+        k = 0
 
-    def make_path(self):
+        while a[end[0]][end[1]] == 0:
+            k += 1
+
+            for i in range(len(a)):
+                for j in range(len(a[i])):
+
+                    if a[i][j] == k:
+
+                        if i > 0 and a[i-1][j] == 0:
+                            if (i, j) in self.visited_points and self.current_obj.walls.check_top_wall((i, j)):
+                                pass
+                            else:
+                                a[i-1][j] = k+1
+
+                        if j > 0 and a[i][j-1] == 0:
+                            if (i, j) in self.visited_points and self.current_obj.walls.check_left_wall((i, j)):
+                                pass
+                            else:
+                                a[i][j-1] = k+1
+
+                        if i < len(a)-1 and a[i+1][j] == 0:
+                            if (i, j) in self.visited_points and self.current_obj.walls.check_bottom_wall((i, j)):
+                                pass
+                            else:
+                                a[i+1][j] = k+1
+
+                        if j < len(a[i])-1 and a[i][j+1] == 0:
+                            if (i, j) in self.visited_points and self.current_obj.walls.check_right_wall((i, j)):
+                                pass
+                            else:
+                                a[i][j+1] = k+1
+        k = a[end[0]][end[1]]
+        return k
+
+    def is_step_valid(self, final_pos):
+        x0, y0 = self.current_obj.current
+        x1, y1 = final_pos
+        if y1-y0 < 0:
+            return not (self.current_obj.walls.check_left_wall((x0, y0)))
+        if y1-y0 > 0:
+            return not (self.current_obj.walls.check_right_wall((x0, y0)))
+        if x1-x0 > 0:
+            return not (self.current_obj.walls.check_bottom_wall((x0, y0)))
+        if x1-x0 < 0:
+            return not (self.current_obj.walls.check_top_wall((x0, y0)))
+
+    def take_step(self, final_pos):
+        x0, y0 = self.current_obj.current
+        x1, y1 = final_pos
+        if y1-y0 < 0:
+            # print("left")
+            self.current_obj.direction_callback("left")
+        if y1-y0 > 0:
+            # print("right")
+            self.current_obj.direction_callback("right")
+        if x1-x0 > 0:
+            # print("down")
+            self.current_obj.direction_callback("down")
+        if x1-x0 < 0:
+            # print("up")
+            self.current_obj.direction_callback("up")
+    
+    def get_dir(self, final_pos):
+        x0, y0 = self.current_obj.current
+        x1, y1 = final_pos
+        if y1-y0 < 0:
+            return "left"
+        if y1-y0 > 0:
+            return "right"
+        if x1-x0 > 0:
+            return "down"
+        if x1-x0 < 0:
+            return "up"
+    
+    def make_path(self,start):
         '''Makes the most optimal path given the steps_taken by the bot in reaching the end'''
         # Alogrithm-
         # 1.Only consider the points where the bot has been to,others are pseudo walls.
@@ -189,9 +141,7 @@ class PlannerNode:
         # 5.Continue till we reach the end
         # 6.The number at the end is the actual path length
 
-        steps = self.steps_taken
-
-        start = self.current_obj.walls.start
+        steps = self.visited_points
         end = self.current_obj.walls.end
 
         a = np.ones((self.current_obj.walls.height,
@@ -309,11 +259,10 @@ class PlannerNode:
 
 
 if __name__ == '__main__':
-
     start_obj = PlannerNode()
-
-    print("Number of steps taken by the bot are = ", len(start_obj.steps_taken))
+    
+    print("Number of steps taken by the bot are = ", len(start_obj.visited_points))
     print("The length of path found by the bot is = ", len(start_obj.path))
     print("Path- ", start_obj.path)
-
+    
     start_obj.current_obj.print_root.mainloop()
