@@ -4,18 +4,39 @@ import random
 import numpy as np
 from MapNode import MapNode
 import tkinter
+import math
+
+def get_dir_backward(dir_forward):
+    '''Returns the direction opposite to input direction'''
+
+    if(dir_forward == 'right'):
+        return 'left'
+
+    if(dir_forward == 'down'):
+        return 'up'
+
+    if(dir_forward == 'left'):
+        return 'right'
+
+    if(dir_forward == 'up'):
+        return 'down'
+
 
 class PlannerNode:
     def __init__(self):
         self.current_obj = MapNode()
         self.visited_points = list(self.current_obj.current)
         self.current_dir="down"
+        self.visited = np.zeros(
+            (self.current_obj.walls.height, self.current_obj.walls.width))
+        self.blocked_places = []
         self.wall_callback()
 
     def wall_callback(self):
 
         while self.current_obj.current != self.current_obj.walls.end:
-
+            position = self.current_obj.current
+            self.visited[position[0]][position[1]] += 1
             next_step = self.get_next_step()
             self.current_dir=self.get_dir(next_step)
             self.take_step(next_step)
@@ -41,11 +62,13 @@ class PlannerNode:
         for point in cost_map:
             if cost_map[point] == min(v):
                 min_cost_points.append(point)
-
+        
         for point in min_cost_points:
-            if self.get_dir(point)==self.current_dir:
+            if(self.get_dir(point)==self.current_dir):
                 return point
-        return random.choice(min_cost_points)
+
+        point=self.secondary_decision_maker(min_cost_points)
+        return point
 
     def get_cost(self, point):
         end = self.current_obj.walls.end
@@ -102,6 +125,23 @@ class PlannerNode:
             return not (self.current_obj.walls.check_bottom_wall((x0, y0)))
         if x1-x0 < 0:
             return not (self.current_obj.walls.check_top_wall((x0, y0)))
+    
+    def get_next_position(self, direction):
+        '''returns the position bot will be at if it moves in the geiven direction'''
+
+        if direction == 'up':
+            if self.current_obj.current[0] >= 1:
+                return (self.current_obj.current[0]-1, self.current_obj.current[1])
+
+        elif direction == 'left':
+            if self.current_obj.current[1] >= 1:
+                return (self.current_obj.current[0], self.current_obj.current[1]-1)
+
+        elif direction == 'right':
+            return (self.current_obj.current[0], self.current_obj.current[1]+1)
+
+        elif direction == 'down':
+            return (self.current_obj.current[0]+1, self.current_obj.current[1])
 
     def take_step(self, final_pos):
         x0, y0 = self.current_obj.current
@@ -130,6 +170,72 @@ class PlannerNode:
             return "down"
         if x1-x0 < 0:
             return "up"
+    
+    def secondary_decision_maker(self,min_cost_points):
+        dirs=[]
+        for point in min_cost_points:
+            dirs.append(self.get_dir(point))
+        # to decide the best direction to be taken
+        dir_prob = {}
+
+        for dir in dirs:
+
+            dir_prob[dir] = 0
+
+            # where the bot would be if the step is taken
+            next_pos = self.get_next_position(dir)
+
+            # penalize if the next point is already visited
+            dir_prob[dir] -= self.visited[next_pos[0]][next_pos[1]]
+
+            # visit unvisited places to explore the map.
+            if self.visited[next_pos[0]][next_pos[1]] == 0:
+                dir_prob[dir] += 10
+
+            # if next step is end take it.
+            if next_pos == self.current_obj.walls.end:
+                dir_prob[dir] += 1000
+
+            # avoid blocked places at all cost
+            if self.get_next_position(dir) in self.blocked_places:
+                dir_prob[dir] -= 100000
+
+            # try to get closer to the end in every step
+            if self.closer_to_end(dir):
+                dir_prob[dir] += 2
+
+            # a path of length 2 is most probably a loop,so avoid taking it.
+            if len(dir) == 2:
+                dir_prob[dir] -= 10
+            
+
+        v = list(dir_prob.values())
+
+        # stores the directions with maximum probability.
+        max_prob_dir = []
+
+        for dir in dir_prob:
+            if dir_prob[dir] == max(v):
+                max_prob_dir.append(dir)
+
+        # From the directions who have maximum probability,choose a random one
+        dir = random.choice(max_prob_dir)
+        point= min_cost_points[dirs.index(dir)]
+        print(point)
+        return(point)
+    
+    def closer_to_end(self, dir):
+        '''returns true if the bot move closer to the end if it moves in the given direction'''
+
+        end = self.current_obj.walls.end
+
+        current = self.current_obj.current
+        next = self.get_next_position(dir)
+
+        dist0 = math.sqrt((current[0]-end[0])**2+(current[1]-end[1])**2)
+        dist1 = math.sqrt((next[0]-end[0])**2+(next[1]-end[1])**2)
+
+        return dist1 < dist0
     
     def make_path(self,start):
         '''Makes the most optimal path given the steps_taken by the bot in reaching the end'''
